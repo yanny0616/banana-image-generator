@@ -461,11 +461,19 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
             } else if (data.choices && data.choices[0]?.delta) {
               // OpenAI 格式
               const delta = data.choices[0].delta;
+
+              // 尝试获取思考过程 (DeepSeek 等模型使用 reasoning_content)
+              const thought = delta.reasoning_content || delta.thinking;
+
+              if (thought) {
+                result.thinking.push({ type: 'text', content: thought });
+                res.write(`data: ${JSON.stringify({ type: 'thinking', content: thought })}\n\n`);
+              }
+
               if (delta.content) {
                 result.text += delta.content;
                 res.write(`data: ${JSON.stringify({ type: 'text', content: delta.content })}\n\n`);
               }
-              // OpenAI 没有原生思考过程或内联图片的流式字段，通常只流式传输文本
             }
           } catch (e) {
             // 忽略解析错误
