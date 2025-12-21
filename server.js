@@ -262,6 +262,8 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
       prompt,
       model = 'gemini-2.5-flash-image',
       apiKey,
+      provider = 'gemini', // 新增：API 提供商
+      customUrl = '', // 新增：自定义 API URL
       aspectRatio = '1:1',
       imageSize = '1K',
       responseModalities = ['TEXT', 'IMAGE'],
@@ -271,7 +273,7 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
     } = req.body;
 
     if (!apiKey) {
-      return res.status(400).json({ error: '请提供 Gemini API Key' });
+      return res.status(400).json({ error: '请提供 API Key' });
     }
 
     // 设置 SSE headers
@@ -337,17 +339,78 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
 
     res.write(`data: ${JSON.stringify({ type: 'status', message: '正在请求 API...' })}\n\n`);
 
-    // 使用流式 API（alt=sse）
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+    let response;
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify(requestBody)
-    });
+    if (provider === 'custom' && customUrl) {
+      // ==================== 自定义 API 调用 ====================
+      console.log(`[Custom API] 请求: ${customUrl}, 模型: ${model}`);
+
+      // 构建 OpenAI 格式的请求体
+      const messages = [{
+        role: 'user',
+        content: []
+      }];
+
+      // 添加图片
+      if (imageParts.length > 0) {
+        for (const part of imageParts) {
+          messages[0].content.push({
+            type: 'image_url',
+            image_url: {
+              url: `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`
+            }
+          });
+        }
+      }
+
+      // 添加文本
+      messages[0].content.push({ type: 'text', text: prompt });
+
+      // 如果有历史消息，添加到 messages
+      if (contents.length > 1) {
+        const historyMessages = contents.slice(0, -1).map(c => ({
+          role: c.role === 'model' ? 'assistant' : 'user',
+          content: c.parts.map(p => p.text || '').filter(t => t).join('\n')
+        }));
+        messages.unshift(...historyMessages);
+      }
+
+      const customRequestBody = {
+        model,
+        messages,
+        max_tokens: 4096,
+        stream: true
+      };
+
+      // 确定 API 端点
+      let endpoint = customUrl;
+      if (!endpoint.includes('/v1/')) {
+        endpoint = endpoint.replace(/\/$/, '') + '/v1/chat/completions';
+      } else if (!endpoint.includes('chat/completions')) {
+        endpoint = endpoint.replace(/\/$/, '') + '/chat/completions';
+      }
+
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(customRequestBody)
+      });
+    } else {
+      // ==================== Gemini 官方 API 调用 ====================
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`;
+
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey
+        },
+        body: JSON.stringify(requestBody)
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -370,7 +433,12 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
         if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.slice(6));
+
+            // 兼容 OpenAI 格式
+            if (data === '[DONE]') return; // OpenAI 结束标记
+
             if (data.candidates && data.candidates[0]?.content?.parts) {
+              // Gemini 格式
               for (const part of data.candidates[0].content.parts) {
                 const inlineData = part.inlineData || part.inline_data;
                 const mimeType = inlineData?.mimeType || inlineData?.mime_type;
@@ -388,6 +456,14 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
                   res.write(`data: ${JSON.stringify({ type: 'image', base64: inlineData.data, mimeType })}\n\n`);
                 }
               }
+            } else if (data.choices && data.choices[0]?.delta) {
+              // OpenAI 格式
+              const delta = data.choices[0].delta;
+              if (delta.content) {
+                result.text += delta.content;
+                res.write(`data: ${JSON.stringify({ type: 'text', content: delta.content })}\n\n`);
+              }
+              // OpenAI 没有原生思考过程或内联图片的流式字段，通常只流式传输文本
             }
           } catch (e) {
             // 忽略解析错误

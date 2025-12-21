@@ -1083,6 +1083,10 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('prompt', message);
       formData.append('model', model);
       formData.append('apiKey', apiKey);
+      formData.append('provider', currentSettings.provider); // 添加 provider 参数
+      if (currentSettings.provider === 'custom') {
+        formData.append('customUrl', currentSettings.customUrl || ''); // 添加自定义 API URL
+      }
       formData.append('aspectRatio', currentSettings.aspectRatio || '1:1');
       formData.append('imageSize', currentSettings.imageSize || '1K');
       formData.append('enableGoogleSearch', currentSettings.enableSearch ? 'true' : 'false');
