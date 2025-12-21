@@ -1386,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'image':
         streamingMsg.images.push({ base64: data.base64, mimeType: data.mimeType });
         const src = `data:${data.mimeType || 'image/png'};base64,${data.base64}`;
-        if (imagesEl) imagesEl.innerHTML += `<img src="${src}" class="chat-msg-image" onclick="window.openViewer('${src}')">`;
+        if (imagesEl) imagesEl.innerHTML += `<img src="${src}" class="chat-msg-image" onclick="window.openViewer(this.src)">`;
         break;
       case 'done':
         if (data.sessionId) chatSessionId = data.sessionId;

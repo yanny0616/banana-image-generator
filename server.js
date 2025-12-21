@@ -454,6 +454,16 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
                   result.text += part.text;
                   res.write(`data: ${JSON.stringify({ type: 'text', content: part.text })}\n\n`);
                 } else if (inlineData) {
+                  // 保存图片到磁盘以便历史记录读取
+                  try {
+                    const timestamp = Date.now();
+                    const filename = `gemini_chat_${timestamp}_${result.images.length}.png`;
+                    const filepath = path.join(outputDir, filename);
+                    fs.writeFileSync(filepath, Buffer.from(inlineData.data, 'base64'));
+                  } catch (e) {
+                    console.error('[Save Image Error]', e);
+                  }
+
                   result.images.push({ base64: inlineData.data, mimeType });
                   res.write(`data: ${JSON.stringify({ type: 'image', base64: inlineData.data, mimeType })}\n\n`);
                 }
