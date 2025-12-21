@@ -1,4 +1,4 @@
-# 🍌 大香蕉 Pro 图像生成器 v2.0
+# 🍌 大香蕉 Pro 图像生成器 v1.0
 
 一个高自由度的图像生成工具，支持 Google Gemini API 和自定义 OpenAI 格式 API。
 
