@@ -249,6 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // 保存并同步
       saveSettings();
       applySettingsToUI();
+      // 更新 AI 对话面板的配置状态
+      if (typeof updateChatConfigStatus === 'function') updateChatConfigStatus();
 
       // 显示保存成功提示
       settingsSaveBtn.textContent = '✅ 已保存';
@@ -277,23 +279,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const advancedToggle = document.getElementById('gemini-advanced-toggle');
   const advancedOptions = document.getElementById('gemini-advanced-options');
 
-  advancedToggle.addEventListener('click', () => {
+  advancedToggle?.addEventListener('click', () => {
     advancedToggle.classList.toggle('open');
-    advancedOptions.classList.toggle('open');
+    advancedOptions?.classList.toggle('open');
   });
 
   // 多轮对话模式切换
   const chatModeCheckbox = document.getElementById('gemini-chat-mode');
   const sessionStatus = document.getElementById('gemini-session-status');
 
-  chatModeCheckbox.addEventListener('change', () => {
+  chatModeCheckbox?.addEventListener('change', () => {
     if (!chatModeCheckbox.checked) {
       clearSession();
     }
   });
 
   // 清除会话
-  document.getElementById('gemini-clear-session').addEventListener('click', clearSession);
+  document.getElementById('gemini-clear-session')?.addEventListener('click', clearSession);
 
   async function clearSession() {
     if (currentSessionId) {
@@ -314,6 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadArea = document.getElementById(`${prefix}-upload`);
     const fileInput = document.getElementById(`${prefix}-images`);
     const preview = document.getElementById(`${prefix}-preview`);
+
+    // 空值检查，防止元素不存在时脚本崩溃
+    if (!uploadArea || !fileInput) return;
 
     uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -484,10 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Gemini 生成按钮事件
-  document.getElementById('gemini-generate').addEventListener('click', () => generateGemini(false));
+  document.getElementById('gemini-generate')?.addEventListener('click', () => generateGemini(false));
 
   // OpenAI 自定义 API 生成
-  document.getElementById('openai-generate').addEventListener('click', async () => {
+  document.getElementById('openai-generate')?.addEventListener('click', async () => {
     const apiUrl = document.getElementById('openai-url').value.trim();
     const apiKey = document.getElementById('openai-apikey').value.trim();
     const model = document.getElementById('openai-model').value.trim();
@@ -618,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 思考过程切换 - 默认展开
-  document.getElementById('thinking-toggle').addEventListener('click', () => {
+  document.getElementById('thinking-toggle')?.addEventListener('click', () => {
     const content = document.getElementById('thinking-content');
     const toggle = document.getElementById('thinking-toggle');
     content.classList.toggle('open');
@@ -813,25 +818,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 切换到 Gemini 面板
     navTabs.forEach(t => t.classList.remove('active'));
-    document.querySelector('[data-tab="gemini"]').classList.add('active');
+    document.querySelector('[data-tab="settings"]')?.classList.add('active');
     panels.forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-gemini').classList.add('active');
+    document.getElementById('panel-settings')?.classList.add('active');
   });
 
   // 使用模板按钮
-  document.getElementById('gemini-use-template').addEventListener('click', () => {
+  document.getElementById('gemini-use-template')?.addEventListener('click', () => {
     loadTemplates();
     navTabs.forEach(t => t.classList.remove('active'));
-    document.querySelector('[data-tab="templates"]').classList.add('active');
+    document.querySelector('[data-tab="templates"]')?.classList.add('active');
     panels.forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-templates').classList.add('active');
+    document.getElementById('panel-templates')?.classList.add('active');
   });
 
   // 更新对话历史显示
   function updateChatDisplay() {
     const chatContainer = document.getElementById('chat-container');
     const chatMessages = document.getElementById('chat-messages');
-    const chatMode = document.getElementById('gemini-chat-mode').checked;
+    const chatMode = document.getElementById('gemini-chat-mode')?.checked;
 
     if (!chatMode || chatHistory.length === 0) {
       chatContainer.style.display = 'none';
@@ -920,16 +925,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 更新配置状态显示
   function updateChatConfigStatus() {
-    const modelSelect = document.getElementById('gemini-model');
-    const apiKeyInput = document.getElementById('gemini-apikey');
     const statusEl = document.getElementById('chat-current-model');
 
     if (statusEl) {
-      const hasApiKey = apiKeyInput?.value?.length > 0;
-      const modelName = modelSelect?.options[modelSelect.selectedIndex]?.text || '未选择';
+      let hasApiKey = false;
+      let displayName = '未配置';
+
+      if (currentSettings.provider === 'gemini') {
+        hasApiKey = currentSettings.geminiApiKey?.length > 0;
+        displayName = currentSettings.geminiModel || 'Gemini';
+      } else if (currentSettings.provider === 'custom') {
+        hasApiKey = currentSettings.customApiKey?.length > 0;
+        displayName = currentSettings.customModel || '自定义 API';
+      }
 
       if (hasApiKey) {
-        statusEl.textContent = modelName;
+        statusEl.textContent = displayName;
         statusEl.style.color = 'var(--accent)';
       } else {
         statusEl.textContent = '未配置 API Key';
@@ -949,17 +960,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('chat-goto-config')?.addEventListener('click', (e) => {
     e.preventDefault();
     navTabs.forEach(t => t.classList.remove('active'));
-    document.querySelector('[data-tab="gemini"]').classList.add('active');
+    document.querySelector('[data-tab="settings"]')?.classList.add('active');
     panels.forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-gemini').classList.add('active');
+    document.getElementById('panel-settings')?.classList.add('active');
   });
 
   document.getElementById('chat-welcome-config')?.addEventListener('click', (e) => {
     e.preventDefault();
     navTabs.forEach(t => t.classList.remove('active'));
-    document.querySelector('[data-tab="gemini"]').classList.add('active');
+    document.querySelector('[data-tab="settings"]')?.classList.add('active');
     panels.forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-gemini').classList.add('active');
+    document.getElementById('panel-settings')?.classList.add('active');
   });
 
   // 图片上传
@@ -986,14 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateChatImagePreview = updateChatImagePreview;
   }
 
-  // 发送消息
-  chatSendBtn?.addEventListener('click', sendChatMessage);
-  chatInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendChatMessage();
-    }
-  });
+  // 发送消息事件 - 移到 sendChatMessage 函数定义之后
 
   // 自动调整输入框高度
   chatInput?.addEventListener('input', () => {
@@ -1005,15 +1009,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const message = chatInput?.value.trim();
     if (!message && chatUploadedImages.length === 0) return;
 
-    // 使用 Gemini 面板的统一配置
-    const apiKey = document.getElementById('gemini-apikey')?.value;
+    // 使用统一的 currentSettings 配置
+    let apiKey = '';
+    let model = '';
+
+    if (currentSettings.provider === 'gemini') {
+      apiKey = currentSettings.geminiApiKey;
+      model = currentSettings.geminiModel || 'gemini-2.5-flash-image';
+    } else if (currentSettings.provider === 'custom') {
+      apiKey = currentSettings.customApiKey;
+      model = currentSettings.customModel || 'dall-e-3';
+    }
+
     if (!apiKey) {
-      alert('请先在 Gemini API 面板配置 API Key');
-      // 跳转到配置页
+      alert('请先在设置面板配置 API Key');
+      // 跳转到设置页
       navTabs.forEach(t => t.classList.remove('active'));
-      document.querySelector('[data-tab="gemini"]').classList.add('active');
+      document.querySelector('[data-tab="settings"]')?.classList.add('active');
       panels.forEach(p => p.classList.remove('active'));
-      document.getElementById('panel-gemini').classList.add('active');
+      document.getElementById('panel-settings')?.classList.add('active');
       return;
     }
 
@@ -1067,11 +1081,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const formData = new FormData();
       formData.append('prompt', message);
-      formData.append('model', document.getElementById('gemini-model')?.value || 'gemini-2.5-flash-image');
+      formData.append('model', model);
       formData.append('apiKey', apiKey);
-      formData.append('aspectRatio', document.getElementById('gemini-aspect')?.value || '1:1');
-      formData.append('imageSize', document.getElementById('gemini-size')?.value || '1K');
-      formData.append('enableGoogleSearch', document.getElementById('gemini-search')?.checked ? 'true' : 'false');
+      formData.append('aspectRatio', currentSettings.aspectRatio || '1:1');
+      formData.append('imageSize', currentSettings.imageSize || '1K');
+      formData.append('enableGoogleSearch', currentSettings.enableSearch ? 'true' : 'false');
       formData.append('showThinking', document.getElementById('chat-show-thinking')?.checked ? 'true' : 'false');
       if (chatSessionId) {
         formData.append('sessionId', chatSessionId);
@@ -1132,6 +1146,15 @@ document.addEventListener('DOMContentLoaded', () => {
       chatSendBtn.textContent = '发送';
     }
   }
+
+  // 绑定发送消息事件（在函数定义之后）
+  chatSendBtn?.addEventListener('click', sendChatMessage);
+  chatInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChatMessage();
+    }
+  });
 
   function addChatMessage(role, content, images, thinking, msgIndex = null) {
     // 移除欢迎信息
