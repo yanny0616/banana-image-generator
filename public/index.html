@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍌 大香蕉 Pro 图像生成器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">🍌</span>
+        <span class="logo-text">大香蕉 Pro</span>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="gemini">
+          <span class="tab-icon">✨</span>
+          Gemini API
+        </button>
+        <button class="nav-tab" data-tab="chat">
+          <span class="tab-icon">💬</span>
+          AI 对话
+        </button>
+        <button class="nav-tab" data-tab="openai">
+          <span class="tab-icon">🔌</span>
+          自定义 API
+        </button>
+        <button class="nav-tab" data-tab="templates">
+          <span class="tab-icon">📝</span>
+          提示词模板
+        </button>
+        <button class="nav-tab" data-tab="history">
+          <span class="tab-icon">🖼️</span>
+          历史记录
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="version">v2.0.0</div>
+      </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- Gemini 面板 -->
+      <div class="panel active" id="panel-gemini">
+        <div class="panel-header">
+          <h1>Gemini 图像生成</h1>
+          <p>使用 Google Gemini API 生成高质量图像，支持多轮对话和搜索接地</p>
+        </div>
+
+        <div class="form-container">
+          <div class="form-section">
+            <label class="form-label">API Key</label>
+            <input type="password" id="gemini-apikey" class="form-input" placeholder="输入你的 Gemini API Key">
+            <div class="form-hint">从 <a href="https://aistudio.google.com/apikey" target="_blank">AI Studio</a> 获取</div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">模型选择</label>
+            <select id="gemini-model" class="form-select">
+              <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image (快速)</option>
+              <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (高质量，支持4K)</option>
+              <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Flash Preview</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-section">
+              <label class="form-label">宽高比</label>
+              <select id="gemini-aspect" class="form-select">
+                <option value="1:1">1:1 正方形</option>
+                <option value="16:9">16:9 宽屏</option>
+                <option value="9:16">9:16 竖屏</option>
+                <option value="4:3">4:3 标准</option>
+                <option value="3:4">3:4 ��版</option>
+                <option value="3:2">3:2 照片</option>
+                <option value="2:3">2:3 竖版照片</option>
+                <option value="4:5">4:5 社交媒体</option>
+                <option value="5:4">5:4 横版</option>
+                <option value="21:9">21:9 超宽</option>
+              </select>
+            </div>
+            <div class="form-section">
+              <label class="form-label">分辨率 (仅 Pro)</label>
+              <select id="gemini-size" class="form-select">
+                <option value="1K">1K</option>
+                <option value="2K">2K</option>
+                <option value="4K">4K</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 高级选项 -->
+          <div class="form-section">
+            <div class="advanced-toggle" id="gemini-advanced-toggle">
+              <span>高级选项</span>
+              <span class="toggle-icon">▼</span>
+            </div>
+            <div class="advanced-options" id="gemini-advanced-options">
+              <div class="option-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="gemini-search">
+                  <span class="checkmark"></span>
+                  启用 Google 搜索接地
+                </label>
+                <div class="option-hint">用于生成基于实时信息的图像（天气、新闻等）</div>
+              </div>
+              <div class="option-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="gemini-thinking">
+                  <span class="checkmark"></span>
+                  显示思考过程
+                </label>
+                <div class="option-hint">查看 Gemini 3 Pro 的思考步骤和草图</div>
+              </div>
+              <div class="option-row">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="gemini-chat-mode">
+                  <span class="checkmark"></span>
+                  多轮对话模式
+                </label>
+                <div class="option-hint">保持上下文，可迭代修改生成的图像</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 会话状态 -->
+          <div class="session-status" id="gemini-session-status" style="display: none;">
+            <span class="session-indicator"></span>
+            <span class="session-text">多轮对话进行中</span>
+            <button class="session-clear" id="gemini-clear-session">清除对话</button>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">参考图片 (可选，最多14张)</label>
+            <div class="upload-area" id="gemini-upload">
+              <input type="file" id="gemini-images" multiple accept="image/*" hidden>
+              <div class="upload-placeholder">
+                <span class="upload-icon">📁</span>
+                <span>点击或拖拽上传图片</span>
+                <span class="upload-hint">支持最多6张对象图片 + 5张人像��角色一致性）</span>
+              </div>
+              <div class="upload-preview" id="gemini-preview"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">提示词</label>
+            <textarea id="gemini-prompt" class="form-textarea" rows="4" placeholder="描述你想要生成的图像..."></textarea>
+            <div class="prompt-actions">
+              <button class="btn-template" id="gemini-use-template">使用模板</button>
+            </div>
+          </div>
+
+          <button class="btn-generate" id="gemini-generate">
+            <span class="btn-icon">✨</span>
+            生成图像
+          </button>
+        </div>
+      </div>
+
+      <!-- OpenAI 自定义 API 面板 -->
+      <div class="panel" id="panel-openai">
+        <div class="panel-header">
+          <h1>自定义 OpenAI 格式 API</h1>
+          <p>使用任意兼容 OpenAI 格式的 API 接口</p>
+        </div>
+
+        <div class="form-container">
+          <div class="form-section">
+            <label class="form-label">API 地址</label>
+            <input type="text" id="openai-url" class="form-input"
+              placeholder="https://api.example.com/v1/images/generations">
+            <div class="form-hint">支持 /v1/images/generations 或 /v1/chat/completions 格式</div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">API Key</label>
+            <input type="password" id="openai-apikey" class="form-input" placeholder="sk-...">
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">模型名称</label>
+            <input type="text" id="openai-model" class="form-input" placeholder="dall-e-3" value="dall-e-3">
+          </div>
+
+          <div class="form-row">
+            <div class="form-section">
+              <label class="form-label">尺寸</label>
+              <select id="openai-size" class="form-select">
+                <option value="1024x1024">1024×1024</option>
+                <option value="1792x1024">1792×1024</option>
+                <option value="1024x1792">1024×1792</option>
+                <option value="512x512">512×512</option>
+                <option value="256x256">256×256</option>
+              </select>
+            </div>
+            <div class="form-section">
+              <label class="form-label">质量</label>
+              <select id="openai-quality" class="form-select">
+                <option value="standard">标准</option>
+                <option value="hd">高清 (HD)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-section">
+              <label class="form-label">风格</label>
+              <select id="openai-style" class="form-select">
+                <option value="vivid">生动</option>
+                <option value="natural">自然</option>
+              </select>
+            </div>
+            <div class="form-section">
+              <label class="form-label">数量</label>
+              <select id="openai-n" class="form-select">
+                <option value="1">1张</option>
+                <option value="2">2张</option>
+                <option value="3">3张</option>
+                <option value="4">4张</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">参考图片 (可选)</label>
+            <div class="upload-area" id="openai-upload">
+              <input type="file" id="openai-images" multiple accept="image/*" hidden>
+              <div class="upload-placeholder">
+                <span class="upload-icon">📁</span>
+                <span>点击或拖拽上传图片</span>
+              </div>
+              <div class="upload-preview" id="openai-preview"></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <label class="form-label">提示词</label>
+            <textarea id="openai-prompt" class="form-textarea" rows="4" placeholder="描述你想要生成的图像..."></textarea>
+          </div>
+
+          <button class="btn-generate" id="openai-generate">
+            <span class="btn-icon">🚀</span>
+            生成图像
+          </button>
+        </div>
+      </div>
+
+      <!-- 提示词模板面板 -->
+      <div class="panel" id="panel-templates">
+        <div class="panel-header">
+          <h1>提示词模板</h1>
+          <p>使用预设模板快速生成高质量提示词</p>
+        </div>
+        <div class="templates-grid" id="templates-grid">
+          <!-- 动态加载 -->
+        </div>
+      </div>
+
+      <!-- 历史记录面板 -->
+      <div class="panel" id="panel-history">
+        <div class="panel-header">
+          <h1>历史记录</h1>
+          <p>查看已生成的图像</p>
+        </div>
+        <div class="history-grid" id="history-grid">
+          <!-- 动态加载 -->
+        </div>
+      </div>
+
+      <!-- AI 对话面板 - AI Studio 风格 -->
+      <div class="panel" id="panel-chat">
+        <div class="chat-panel">
+          <!-- 顶部状态栏 - 显示当前使用的配置 -->
+          <div class="chat-settings">
+            <div class="chat-config-status" id="chat-config-status">
+              <span class="config-label">当前配置:</span>
+              <span id="chat-current-model">未配置</span>
+              <a href="#" id="chat-goto-config" class="config-link">前往配置 →</a>
+            </div>
+            <div class="chat-setting-item">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chat-show-thinking">
+                显示思考过程
+              </label>
+            </div>
+            <button class="chat-clear-btn" id="chat-clear">🗑️ 清空对话</button>
+          </div>
+
+          <!-- 对话消息区域 -->
+          <div class="chat-messages-area" id="chat-messages-area">
+            <div class="chat-welcome">
+              <div class="chat-welcome-icon">✨</div>
+              <h2>欢迎使用 AI 对话</h2>
+              <p>使用 Gemini API 面板的配置进行对话</p>
+              <p class="chat-welcome-hint">请先在 <a href="#" id="chat-welcome-config">Gemini API</a> 面板配置 API Key</p>
+            </div>
+          </div>
+
+          <!-- 底部输入区域 -->
+          <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+              <div class="chat-upload-btn" id="chat-upload-btn" title="上传图片">
+                <input type="file" id="chat-image-input" multiple accept="image/*" hidden>
+                📎
+              </div>
+              <div class="chat-image-preview" id="chat-image-preview"></div>
+              <textarea id="chat-input" class="chat-input" placeholder="输入消息..." rows="1"></textarea>
+              <button class="chat-send-btn" id="chat-send">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 对话历史区域 -->
+      <div class="chat-container" id="chat-container" style="display: none;">
+        <div class="chat-header">
+          <h2>对话历史</h2>
+          <button class="btn-minimize" id="minimize-chat">_</button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <!-- 动态填充对话消息 -->
+        </div>
+      </div>
+
+      <!-- 结果展示区 -->
+      <div class="result-container" id="result-container">
+        <div class="result-header">
+          <h2>生成结果</h2>
+          <div class="result-actions">
+            <button class="btn-regenerate" id="regenerate-btn" title="重新生成">🔄 重新生成</button>
+            <button class="btn-close" id="close-result">×</button>
+          </div>
+        </div>
+        <div class="result-content">
+          <!-- 思考过程 -->
+          <div class="thinking-section" id="thinking-section" style="display: none;">
+            <div class="thinking-header">
+              <span>💭 思考过程</span>
+              <button class="thinking-toggle" id="thinking-toggle">展开</button>
+            </div>
+            <div class="thinking-content" id="thinking-content"></div>
+          </div>
+
+          <!-- 接地信息 -->
+          <div class="grounding-section" id="grounding-section" style="display: none;">
+            <div class="grounding-header">🔍 信息来源</div>
+            <div class="grounding-content" id="grounding-content"></div>
+          </div>
+
+          <div class="result-text" id="result-text"></div>
+          <div class="result-images" id="result-images"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 加载遮罩 -->
+  <div class="loading-overlay" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">正在生成图像...</div>
+  </div>
+
+  <!-- 图片查看器 -->
+  <div class="image-viewer" id="image-viewer">
+    <button class="viewer-close" id="viewer-close">×</button>
+    <img src="" alt="" id="viewer-image">
+    <div class="viewer-actions">
+      <a class="viewer-btn" id="viewer-download" download>下载图片</a>
+    </div>
+  </div>
+
+  <!-- 模板弹窗 -->
+  <div class="modal" id="template-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="template-modal-title">使用模板</h3>
+        <button class="modal-close" id="template-modal-close">×</button>
+      </div>
+      <div class="modal-body" id="template-modal-body">
+        <!-- 动态填充 -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="template-modal-cancel">取消</button>
+        <button class="btn-primary" id="template-modal-apply">应用</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
