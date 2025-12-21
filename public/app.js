@@ -32,35 +32,150 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 本地存储 key
   const STORAGE_KEYS = {
+    provider: 'banana_provider',
     geminiApiKey: 'banana_gemini_api_key',
     geminiModel: 'banana_gemini_model',
-    openaiUrl: 'banana_openai_url',
-    openaiApiKey: 'banana_openai_api_key',
-    openaiModel: 'banana_openai_model'
+    customUrl: 'banana_custom_url',
+    customApiKey: 'banana_custom_api_key',
+    customModel: 'banana_custom_model',
+    aspectRatio: 'banana_aspect_ratio',
+    imageSize: 'banana_image_size',
+    outputType: 'banana_output_type',
+    enableSearch: 'banana_enable_search',
+    showThinking: 'banana_show_thinking',
+    chatMode: 'banana_chat_mode'
+  };
+
+  // 当前设置
+  let currentSettings = {
+    provider: 'gemini',
+    geminiApiKey: '',
+    geminiModel: 'gemini-2.5-flash-image',
+    customUrl: '',
+    customApiKey: '',
+    customModel: 'dall-e-3',
+    aspectRatio: '1:1',
+    imageSize: '1K',
+    outputType: 'TEXT,IMAGE',
+    enableSearch: false,
+    showThinking: false,
+    chatMode: false
   };
 
   // 初始化 - 恢复保存的设置
   function initSettings() {
-    const geminiApiKey = localStorage.getItem(STORAGE_KEYS.geminiApiKey);
-    const geminiModel = localStorage.getItem(STORAGE_KEYS.geminiModel);
-    const openaiUrl = localStorage.getItem(STORAGE_KEYS.openaiUrl);
-    const openaiApiKey = localStorage.getItem(STORAGE_KEYS.openaiApiKey);
-    const openaiModel = localStorage.getItem(STORAGE_KEYS.openaiModel);
+    // 从 localStorage 读取所有设置
+    currentSettings.provider = localStorage.getItem(STORAGE_KEYS.provider) || 'gemini';
+    currentSettings.geminiApiKey = localStorage.getItem(STORAGE_KEYS.geminiApiKey) || '';
+    currentSettings.geminiModel = localStorage.getItem(STORAGE_KEYS.geminiModel) || 'gemini-2.5-flash-image';
+    currentSettings.customUrl = localStorage.getItem(STORAGE_KEYS.customUrl) || '';
+    currentSettings.customApiKey = localStorage.getItem(STORAGE_KEYS.customApiKey) || '';
+    currentSettings.customModel = localStorage.getItem(STORAGE_KEYS.customModel) || 'dall-e-3';
+    currentSettings.aspectRatio = localStorage.getItem(STORAGE_KEYS.aspectRatio) || '1:1';
+    currentSettings.imageSize = localStorage.getItem(STORAGE_KEYS.imageSize) || '1K';
+    currentSettings.outputType = localStorage.getItem(STORAGE_KEYS.outputType) || 'TEXT,IMAGE';
+    currentSettings.enableSearch = localStorage.getItem(STORAGE_KEYS.enableSearch) === 'true';
+    currentSettings.showThinking = localStorage.getItem(STORAGE_KEYS.showThinking) === 'true';
+    currentSettings.chatMode = localStorage.getItem(STORAGE_KEYS.chatMode) === 'true';
 
-    if (geminiApiKey) document.getElementById('gemini-apikey').value = geminiApiKey;
-    if (geminiModel) document.getElementById('gemini-model').value = geminiModel;
-    if (openaiUrl) document.getElementById('openai-url').value = openaiUrl;
-    if (openaiApiKey) document.getElementById('openai-apikey').value = openaiApiKey;
-    if (openaiModel) document.getElementById('openai-model').value = openaiModel;
+    // 应用到 UI 元素
+    applySettingsToUI();
+  }
+
+  // 应用设置到 UI
+  function applySettingsToUI() {
+    // 图像生成面板
+    const geminiApiKeyEl = document.getElementById('gemini-apikey');
+    const geminiModelEl = document.getElementById('gemini-model');
+    const geminiAspectEl = document.getElementById('gemini-aspect');
+    const geminSizeEl = document.getElementById('gemini-size');
+    const geminiSearchEl = document.getElementById('gemini-search');
+    const geminiThinkingEl = document.getElementById('gemini-thinking');
+    const geminiChatModeEl = document.getElementById('gemini-chat-mode');
+
+    if (geminiApiKeyEl) geminiApiKeyEl.value = currentSettings.geminiApiKey;
+    if (geminiModelEl) geminiModelEl.value = currentSettings.geminiModel;
+    if (geminiAspectEl) geminiAspectEl.value = currentSettings.aspectRatio;
+    if (geminSizeEl) geminSizeEl.value = currentSettings.imageSize;
+    if (geminiSearchEl) geminiSearchEl.checked = currentSettings.enableSearch;
+    if (geminiThinkingEl) geminiThinkingEl.checked = currentSettings.showThinking;
+    if (geminiChatModeEl) geminiChatModeEl.checked = currentSettings.chatMode;
+
+    // 自定义 API 配置
+    const customUrlEl = document.getElementById('custom-url');
+    const customApiKeyEl = document.getElementById('custom-apikey');
+    const customModelEl = document.getElementById('custom-model');
+
+    if (customUrlEl) customUrlEl.value = currentSettings.customUrl;
+    if (customApiKeyEl) customApiKeyEl.value = currentSettings.customApiKey;
+    if (customModelEl) customModelEl.value = currentSettings.customModel;
+
+    // 设置面板
+    const settingsGeminiApiKeyEl = document.getElementById('settings-gemini-apikey');
+    const settingsGeminiModelEl = document.getElementById('settings-gemini-model');
+    const settingsCustomUrlEl = document.getElementById('settings-custom-url');
+    const settingsCustomApiKeyEl = document.getElementById('settings-custom-apikey');
+    const settingsCustomModelEl = document.getElementById('settings-custom-model');
+    const settingsAspectEl = document.getElementById('settings-aspect');
+    const settingsSizeEl = document.getElementById('settings-size');
+    const settingsOutputTypeEl = document.getElementById('settings-output-type');
+    const settingsSearchEl = document.getElementById('settings-search');
+    const settingsThinkingEl = document.getElementById('settings-thinking');
+    const settingsChatModeEl = document.getElementById('settings-chat-mode');
+
+    if (settingsGeminiApiKeyEl) settingsGeminiApiKeyEl.value = currentSettings.geminiApiKey;
+    if (settingsGeminiModelEl) settingsGeminiModelEl.value = currentSettings.geminiModel;
+    if (settingsCustomUrlEl) settingsCustomUrlEl.value = currentSettings.customUrl;
+    if (settingsCustomApiKeyEl) settingsCustomApiKeyEl.value = currentSettings.customApiKey;
+    if (settingsCustomModelEl) settingsCustomModelEl.value = currentSettings.customModel;
+    if (settingsAspectEl) settingsAspectEl.value = currentSettings.aspectRatio;
+    if (settingsSizeEl) settingsSizeEl.value = currentSettings.imageSize;
+    if (settingsOutputTypeEl) settingsOutputTypeEl.value = currentSettings.outputType;
+    if (settingsSearchEl) settingsSearchEl.checked = currentSettings.enableSearch;
+    if (settingsThinkingEl) settingsThinkingEl.checked = currentSettings.showThinking;
+    if (settingsChatModeEl) settingsChatModeEl.checked = currentSettings.chatMode;
+
+    // 提供商切换
+    const providerRadios = document.querySelectorAll('input[name="provider"]');
+    const settingsProviderRadios = document.querySelectorAll('input[name="settings-provider"]');
+    providerRadios.forEach(r => r.checked = r.value === currentSettings.provider);
+    settingsProviderRadios.forEach(r => r.checked = r.value === currentSettings.provider);
+
+    // 显示/隐藏对应配置区
+    updateProviderUI(currentSettings.provider);
+    updateSettingsProviderUI(currentSettings.provider);
+  }
+
+  // 更新提供商 UI (图像生成面板)
+  function updateProviderUI(provider) {
+    const geminiConfig = document.getElementById('gemini-config');
+    const customConfig = document.getElementById('custom-config');
+    if (geminiConfig) geminiConfig.style.display = provider === 'gemini' ? 'block' : 'none';
+    if (customConfig) customConfig.style.display = provider === 'custom' ? 'block' : 'none';
+  }
+
+  // 更新提供商 UI (设置面板)
+  function updateSettingsProviderUI(provider) {
+    const geminiConfig = document.getElementById('settings-gemini-config');
+    const customConfig = document.getElementById('settings-custom-config');
+    if (geminiConfig) geminiConfig.style.display = provider === 'gemini' ? 'block' : 'none';
+    if (customConfig) customConfig.style.display = provider === 'custom' ? 'block' : 'none';
   }
 
   // 保存设置到本地存储
   function saveSettings() {
-    localStorage.setItem(STORAGE_KEYS.geminiApiKey, document.getElementById('gemini-apikey').value);
-    localStorage.setItem(STORAGE_KEYS.geminiModel, document.getElementById('gemini-model').value);
-    localStorage.setItem(STORAGE_KEYS.openaiUrl, document.getElementById('openai-url').value);
-    localStorage.setItem(STORAGE_KEYS.openaiApiKey, document.getElementById('openai-apikey').value);
-    localStorage.setItem(STORAGE_KEYS.openaiModel, document.getElementById('openai-model').value);
+    localStorage.setItem(STORAGE_KEYS.provider, currentSettings.provider);
+    localStorage.setItem(STORAGE_KEYS.geminiApiKey, currentSettings.geminiApiKey);
+    localStorage.setItem(STORAGE_KEYS.geminiModel, currentSettings.geminiModel);
+    localStorage.setItem(STORAGE_KEYS.customUrl, currentSettings.customUrl);
+    localStorage.setItem(STORAGE_KEYS.customApiKey, currentSettings.customApiKey);
+    localStorage.setItem(STORAGE_KEYS.customModel, currentSettings.customModel);
+    localStorage.setItem(STORAGE_KEYS.aspectRatio, currentSettings.aspectRatio);
+    localStorage.setItem(STORAGE_KEYS.imageSize, currentSettings.imageSize);
+    localStorage.setItem(STORAGE_KEYS.outputType, currentSettings.outputType);
+    localStorage.setItem(STORAGE_KEYS.enableSearch, currentSettings.enableSearch);
+    localStorage.setItem(STORAGE_KEYS.showThinking, currentSettings.showThinking);
+    localStorage.setItem(STORAGE_KEYS.chatMode, currentSettings.chatMode);
   }
 
   // 标签切换
@@ -83,6 +198,79 @@ document.addEventListener('DOMContentLoaded', () => {
         loadTemplates();
       }
     });
+  });
+
+  // ==================== 提供商切换事件 ====================
+  // 图像生成面板的提供商切换
+  document.querySelectorAll('input[name="provider"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      currentSettings.provider = e.target.value;
+      updateProviderUI(e.target.value);
+      // 同步到设置面板
+      document.querySelectorAll('input[name="settings-provider"]').forEach(r => {
+        r.checked = r.value === e.target.value;
+      });
+      updateSettingsProviderUI(e.target.value);
+      saveSettings();
+    });
+  });
+
+  // 设置面板的提供商切换
+  document.querySelectorAll('input[name="settings-provider"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      currentSettings.provider = e.target.value;
+      updateSettingsProviderUI(e.target.value);
+      // 同步到图像生成面板
+      document.querySelectorAll('input[name="provider"]').forEach(r => {
+        r.checked = r.value === e.target.value;
+      });
+      updateProviderUI(e.target.value);
+    });
+  });
+
+  // 设置面板保存按钮
+  const settingsSaveBtn = document.getElementById('settings-save');
+  if (settingsSaveBtn) {
+    settingsSaveBtn.addEventListener('click', () => {
+      // 从设置面板读取所有值
+      currentSettings.provider = document.querySelector('input[name="settings-provider"]:checked')?.value || 'gemini';
+      currentSettings.geminiApiKey = document.getElementById('settings-gemini-apikey')?.value || '';
+      currentSettings.geminiModel = document.getElementById('settings-gemini-model')?.value || 'gemini-2.5-flash-image';
+      currentSettings.customUrl = document.getElementById('settings-custom-url')?.value || '';
+      currentSettings.customApiKey = document.getElementById('settings-custom-apikey')?.value || '';
+      currentSettings.customModel = document.getElementById('settings-custom-model')?.value || 'dall-e-3';
+      currentSettings.aspectRatio = document.getElementById('settings-aspect')?.value || '1:1';
+      currentSettings.imageSize = document.getElementById('settings-size')?.value || '1K';
+      currentSettings.outputType = document.getElementById('settings-output-type')?.value || 'TEXT,IMAGE';
+      currentSettings.enableSearch = document.getElementById('settings-search')?.checked || false;
+      currentSettings.showThinking = document.getElementById('settings-thinking')?.checked || false;
+      currentSettings.chatMode = document.getElementById('settings-chat-mode')?.checked || false;
+
+      // 保存并同步
+      saveSettings();
+      applySettingsToUI();
+
+      // 显示保存成功提示
+      settingsSaveBtn.textContent = '✅ 已保存';
+      setTimeout(() => {
+        settingsSaveBtn.innerHTML = '<span class="btn-icon">💾</span>保存设置';
+      }, 2000);
+    });
+  }
+
+  // "前往配置"链接点击跳转到设置面板
+  const gotoConfigLinks = document.querySelectorAll('#chat-goto-config, #chat-welcome-config');
+  gotoConfigLinks.forEach(link => {
+    if (link) {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        // 切换到设置面板
+        navTabs.forEach(t => t.classList.remove('active'));
+        document.querySelector('[data-tab="settings"]').classList.add('active');
+        panels.forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-settings').classList.add('active');
+      });
+    }
   });
 
   // 高级选项切换
@@ -1226,10 +1414,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderMarkdown(text) {
     if (!text) return '';
     return text
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')  // **粗体**
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')              // *斜体*
-      .replace(/`(.+?)`/g, '<code>$1</code>')            // `代码`
-      .replace(/\n/g, '<br>');                            // 换行
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // **粗体**
+      .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>') // *斜体* (排除**)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')            // `代码`
+      .replace(/\n/g, '<br>');                              // 换行
   }
 
   // 在消息完成时应用 Markdown

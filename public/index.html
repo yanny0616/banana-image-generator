@@ -18,25 +18,25 @@
       </div>
 
       <nav class="nav-tabs">
-        <button class="nav-tab active" data-tab="gemini">
-          <span class="tab-icon">✨</span>
-          Gemini API
+        <button class="nav-tab active" data-tab="generate">
+          <span class="tab-icon">🎨</span>
+          图像生成
         </button>
         <button class="nav-tab" data-tab="chat">
           <span class="tab-icon">💬</span>
           AI 对话
         </button>
-        <button class="nav-tab" data-tab="openai">
-          <span class="tab-icon">🔌</span>
-          自定义 API
-        </button>
         <button class="nav-tab" data-tab="templates">
-          <span class="tab-icon">📝</span>
+          <span class="tab-icon">�</span>
           提示词模板
         </button>
         <button class="nav-tab" data-tab="history">
-          <span class="tab-icon">🖼️</span>
+          <span class="tab-icon">�️</span>
           历史记录
+        </button>
+        <button class="nav-tab" data-tab="settings">
+          <span class="tab-icon">⚙️</span>
+          设置
         </button>
       </nav>
 
@@ -47,29 +47,66 @@
 
     <!-- 主内容区 -->
     <main class="main-content">
-      <!-- Gemini 面板 -->
-      <div class="panel active" id="panel-gemini">
+      <!-- 图像生成面板 -->
+      <div class="panel active" id="panel-generate">
         <div class="panel-header">
-          <h1>Gemini 图像生成</h1>
-          <p>使用 Google Gemini API 生成高质量图像，支持多轮对话和搜索接地</p>
+          <h1>图像生成</h1>
+          <p>使用 AI API 生成高质量图像</p>
         </div>
 
         <div class="form-container">
-          <div class="form-section">
-            <label class="form-label">API Key</label>
-            <input type="password" id="gemini-apikey" class="form-input" placeholder="输入你的 Gemini API Key">
-            <div class="form-hint">从 <a href="https://aistudio.google.com/apikey" target="_blank">AI Studio</a> 获取</div>
+          <!-- 提供商切换 -->
+          <div class="form-section provider-section">
+            <label class="form-label">API 提供商</label>
+            <div class="provider-toggle">
+              <label class="provider-option">
+                <input type="radio" name="provider" value="gemini" checked>
+                <span class="provider-label">Gemini 官方</span>
+              </label>
+              <label class="provider-option">
+                <input type="radio" name="provider" value="custom">
+                <span class="provider-label">自定义 API</span>
+              </label>
+            </div>
           </div>
 
-          <div class="form-section">
-            <label class="form-label">模型选择</label>
-            <select id="gemini-model" class="form-select">
-              <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image (快速)</option>
-              <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (高质量，支持4K)</option>
-              <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Flash Preview</option>
-            </select>
+          <!-- Gemini API 配置 -->
+          <div id="gemini-config" class="api-config-section">
+            <div class="form-section">
+              <label class="form-label">Gemini API Key</label>
+              <input type="password" id="gemini-apikey" class="form-input" placeholder="输入你的 Gemini API Key">
+              <div class="form-hint">从 <a href="https://aistudio.google.com/apikey" target="_blank">AI Studio</a> 获取
+              </div>
+            </div>
+            <div class="form-section">
+              <label class="form-label">模型选择</label>
+              <select id="gemini-model" class="form-select">
+                <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image (快速)</option>
+                <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (高质量，支持4K)</option>
+                <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Flash Preview</option>
+              </select>
+            </div>
           </div>
 
+          <!-- 自定义 API 配置 -->
+          <div id="custom-config" class="api-config-section" style="display: none;">
+            <div class="form-section">
+              <label class="form-label">API 地址</label>
+              <input type="text" id="custom-url" class="form-input"
+                placeholder="https://api.example.com/v1/images/generations">
+              <div class="form-hint">支持 OpenAI 格式的 API</div>
+            </div>
+            <div class="form-section">
+              <label class="form-label">API Key</label>
+              <input type="password" id="custom-apikey" class="form-input" placeholder="sk-...">
+            </div>
+            <div class="form-section">
+              <label class="form-label">模型名称</label>
+              <input type="text" id="custom-model" class="form-input" placeholder="dall-e-3" value="dall-e-3">
+            </div>
+          </div>
+
+          <!-- 通用图像配置 -->
           <div class="form-row">
             <div class="form-section">
               <label class="form-label">宽高比</label>
@@ -144,7 +181,7 @@
               <div class="upload-placeholder">
                 <span class="upload-icon">📁</span>
                 <span>点击或拖拽上传图片</span>
-                <span class="upload-hint">支持最多6张对象图片 + 5张人像��角色一致性）</span>
+                <span class="upload-hint">支持最多6张对象图片 + 5张人像(角色一致性)</span>
               </div>
               <div class="upload-preview" id="gemini-preview"></div>
             </div>
@@ -165,93 +202,7 @@
         </div>
       </div>
 
-      <!-- OpenAI 自定义 API 面板 -->
-      <div class="panel" id="panel-openai">
-        <div class="panel-header">
-          <h1>自定义 OpenAI 格式 API</h1>
-          <p>使用任意兼容 OpenAI 格式的 API 接口</p>
-        </div>
 
-        <div class="form-container">
-          <div class="form-section">
-            <label class="form-label">API 地址</label>
-            <input type="text" id="openai-url" class="form-input"
-              placeholder="https://api.example.com/v1/images/generations">
-            <div class="form-hint">支持 /v1/images/generations 或 /v1/chat/completions 格式</div>
-          </div>
-
-          <div class="form-section">
-            <label class="form-label">API Key</label>
-            <input type="password" id="openai-apikey" class="form-input" placeholder="sk-...">
-          </div>
-
-          <div class="form-section">
-            <label class="form-label">模型名称</label>
-            <input type="text" id="openai-model" class="form-input" placeholder="dall-e-3" value="dall-e-3">
-          </div>
-
-          <div class="form-row">
-            <div class="form-section">
-              <label class="form-label">尺寸</label>
-              <select id="openai-size" class="form-select">
-                <option value="1024x1024">1024×1024</option>
-                <option value="1792x1024">1792×1024</option>
-                <option value="1024x1792">1024×1792</option>
-                <option value="512x512">512×512</option>
-                <option value="256x256">256×256</option>
-              </select>
-            </div>
-            <div class="form-section">
-              <label class="form-label">质量</label>
-              <select id="openai-quality" class="form-select">
-                <option value="standard">标准</option>
-                <option value="hd">高清 (HD)</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-section">
-              <label class="form-label">风格</label>
-              <select id="openai-style" class="form-select">
-                <option value="vivid">生动</option>
-                <option value="natural">自然</option>
-              </select>
-            </div>
-            <div class="form-section">
-              <label class="form-label">数量</label>
-              <select id="openai-n" class="form-select">
-                <option value="1">1张</option>
-                <option value="2">2张</option>
-                <option value="3">3张</option>
-                <option value="4">4张</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <label class="form-label">参考图片 (可选)</label>
-            <div class="upload-area" id="openai-upload">
-              <input type="file" id="openai-images" multiple accept="image/*" hidden>
-              <div class="upload-placeholder">
-                <span class="upload-icon">📁</span>
-                <span>点击或拖拽上传图片</span>
-              </div>
-              <div class="upload-preview" id="openai-preview"></div>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <label class="form-label">提示词</label>
-            <textarea id="openai-prompt" class="form-textarea" rows="4" placeholder="描述你想要生成的图像..."></textarea>
-          </div>
-
-          <button class="btn-generate" id="openai-generate">
-            <span class="btn-icon">🚀</span>
-            生成图像
-          </button>
-        </div>
-      </div>
 
       <!-- 提示词模板面板 -->
       <div class="panel" id="panel-templates">
@@ -272,6 +223,145 @@
         </div>
         <div class="history-grid" id="history-grid">
           <!-- 动态加载 -->
+        </div>
+      </div>
+
+      <!-- 设置面板 -->
+      <div class="panel" id="panel-settings">
+        <div class="panel-header">
+          <h1>设置</h1>
+          <p>配置图像生成和 AI 对话的参数</p>
+        </div>
+
+        <div class="form-container settings-container">
+          <!-- API 配置区 -->
+          <div class="settings-section">
+            <h3 class="settings-title">🔑 API 配置</h3>
+
+            <div class="form-section provider-section">
+              <label class="form-label">API 提供商</label>
+              <div class="provider-toggle">
+                <label class="provider-option">
+                  <input type="radio" name="settings-provider" value="gemini" checked>
+                  <span class="provider-label">Gemini 官方</span>
+                </label>
+                <label class="provider-option">
+                  <input type="radio" name="settings-provider" value="custom">
+                  <span class="provider-label">自定义 API</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Gemini 配置 -->
+            <div id="settings-gemini-config">
+              <div class="form-section">
+                <label class="form-label">Gemini API Key</label>
+                <input type="password" id="settings-gemini-apikey" class="form-input" placeholder="输入你的 Gemini API Key">
+                <div class="form-hint">从 <a href="https://aistudio.google.com/apikey" target="_blank">AI Studio</a> 获取
+                </div>
+              </div>
+              <div class="form-section">
+                <label class="form-label">模型选择</label>
+                <select id="settings-gemini-model" class="form-select">
+                  <option value="gemini-2.5-flash-image">Gemini 2.5 Flash Image (快速)</option>
+                  <option value="gemini-3-pro-image-preview">Gemini 3 Pro Image (高质量，支持4K)</option>
+                  <option value="gemini-2.0-flash-preview-image-generation">Gemini 2.0 Flash Preview</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 自定义 API 配置 -->
+            <div id="settings-custom-config" style="display: none;">
+              <div class="form-section">
+                <label class="form-label">API 地址</label>
+                <input type="text" id="settings-custom-url" class="form-input"
+                  placeholder="https://api.example.com/v1/images/generations">
+              </div>
+              <div class="form-section">
+                <label class="form-label">API Key</label>
+                <input type="password" id="settings-custom-apikey" class="form-input" placeholder="sk-...">
+              </div>
+              <div class="form-section">
+                <label class="form-label">模型名称</label>
+                <input type="text" id="settings-custom-model" class="form-input" placeholder="dall-e-3"
+                  value="dall-e-3">
+              </div>
+            </div>
+          </div>
+
+          <!-- 图像配置区 -->
+          <div class="settings-section">
+            <h3 class="settings-title">🖼️ 图像配置</h3>
+
+            <div class="form-row">
+              <div class="form-section">
+                <label class="form-label">宽高比</label>
+                <select id="settings-aspect" class="form-select">
+                  <option value="1:1">1:1 正方形</option>
+                  <option value="16:9">16:9 宽屏</option>
+                  <option value="9:16">9:16 竖屏</option>
+                  <option value="4:3">4:3 标准</option>
+                  <option value="3:4">3:4 竖版</option>
+                  <option value="3:2">3:2 照片</option>
+                  <option value="2:3">2:3 竖版照片</option>
+                  <option value="4:5">4:5 社交媒体</option>
+                  <option value="5:4">5:4 横版</option>
+                  <option value="21:9">21:9 超宽</option>
+                </select>
+              </div>
+              <div class="form-section">
+                <label class="form-label">分辨率 (仅 Pro)</label>
+                <select id="settings-size" class="form-select">
+                  <option value="1K">1K</option>
+                  <option value="2K">2K</option>
+                  <option value="4K">4K</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label">输出类型</label>
+              <select id="settings-output-type" class="form-select">
+                <option value="TEXT,IMAGE">图片 + 文字</option>
+                <option value="IMAGE">仅图片</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 高级功能区 -->
+          <div class="settings-section">
+            <h3 class="settings-title">✨ 高级功能</h3>
+
+            <div class="option-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="settings-search">
+                <span class="checkmark"></span>
+                启用 Google 搜索接地
+              </label>
+              <div class="option-hint">用于生成基于实时信息的图像（天气、新闻等）</div>
+            </div>
+            <div class="option-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="settings-thinking">
+                <span class="checkmark"></span>
+                显示思考过程
+              </label>
+              <div class="option-hint">查看 Gemini 3 Pro 的思考步骤和草图</div>
+            </div>
+            <div class="option-row">
+              <label class="checkbox-label">
+                <input type="checkbox" id="settings-chat-mode">
+                <span class="checkmark"></span>
+                多轮对话模式
+              </label>
+              <div class="option-hint">保持上下文，可迭代修改生成的图像</div>
+            </div>
+          </div>
+
+          <button class="btn-generate" id="settings-save">
+            <span class="btn-icon">💾</span>
+            保存设置
+          </button>
         </div>
       </div>
 

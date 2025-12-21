@@ -1813,3 +1813,73 @@ body {
     max-width: 150px;
   }
 }
+
+/* ==================== 提供商切换器样式 ==================== */
+.provider-toggle {
+  display: flex;
+  gap: 10px;
+  background: var(--bg-input);
+  padding: 6px;
+  border-radius: var(--radius);
+}
+
+.provider-option {
+  flex: 1;
+  cursor: pointer;
+}
+
+.provider-option input[type="radio"] {
+  display: none;
+}
+
+.provider-label {
+  display: block;
+  text-align: center;
+  padding: 10px 16px;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.provider-option input[type="radio"]:checked+.provider-label {
+  background: var(--accent);
+  color: #000;
+}
+
+.provider-option:hover .provider-label {
+  background: var(--bg-hover);
+}
+
+.provider-option input[type="radio"]:checked+.provider-label:hover {
+  background: var(--accent-hover);
+}
+
+.api-config-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+/* ==================== 设置面板样式 ==================== */
+.settings-container {
+  max-width: 600px;
+}
+
+.settings-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.settings-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
