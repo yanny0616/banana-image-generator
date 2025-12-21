@@ -1385,8 +1385,16 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
       case 'image':
         streamingMsg.images.push({ base64: data.base64, mimeType: data.mimeType });
-        const src = `data:${data.mimeType || 'image/png'};base64,${data.base64}`;
-        if (imagesEl) imagesEl.innerHTML += `<img src="${src}" class="chat-msg-image" onclick="window.openViewer(this.src)">`;
+        // 优化：转为 Blob URL 减少 DOM 卡顿
+        try {
+          const blob = base64ToBlob(data.base64, data.mimeType || 'image/png');
+          const blobUrl = URL.createObjectURL(blob);
+          if (imagesEl) imagesEl.innerHTML += `<img src="${blobUrl}" class="chat-msg-image" onclick="window.openViewer(this.src)">`;
+        } catch (e) {
+          console.error('Blob转换失败，回退到Base64', e);
+          const src = `data:${data.mimeType || 'image/png'};base64,${data.base64}`;
+          if (imagesEl) imagesEl.innerHTML += `<img src="${src}" class="chat-msg-image" onclick="window.openViewer(this.src)">`;
+        }
         break;
       case 'done':
         if (data.sessionId) chatSessionId = data.sessionId;
@@ -1395,6 +1403,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contentEl) contentEl.innerHTML = `<span style="color: var(--error)">❌ 错误: ${data.error}</span>`;
         break;
     }
+  }
+
+  // Base64 转 Blob 辅助函数
+  function base64ToBlob(base64, mimeType) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
   }
 
   // 打字机效果 - 使用字符队列逐字显示
