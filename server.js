@@ -383,11 +383,13 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
       };
 
       // 确定 API 端点
-      let endpoint = customUrl;
-      if (!endpoint.includes('/v1/')) {
-        endpoint = endpoint.replace(/\/$/, '') + '/v1/chat/completions';
-      } else if (!endpoint.includes('chat/completions')) {
-        endpoint = endpoint.replace(/\/$/, '') + '/chat/completions';
+      let endpoint = customUrl.replace(/\/$/, '');
+      if (endpoint.endsWith('/chat/completions')) {
+        // 用户提供了完整路径，不做修改
+      } else if (endpoint.endsWith('/v1')) {
+        endpoint += '/chat/completions';
+      } else {
+        endpoint += '/v1/chat/completions';
       }
 
       response = await fetch(endpoint, {
@@ -558,8 +560,14 @@ app.post('/api/openai/generate', upload.array('images', 10), async (req, res) =>
       };
 
       // 如果URL不包含路径，添加默认路径
-      if (!endpoint.includes('/v1/')) {
-        endpoint = endpoint.replace(/\/$/, '') + '/v1/chat/completions';
+      // 如果URL不包含路径，添加默认路径
+      if (!endpoint.includes('chat/completions')) {
+        endpoint = endpoint.replace(/\/$/, '');
+        if (endpoint.endsWith('/v1')) {
+          endpoint += '/chat/completions';
+        } else {
+          endpoint += '/v1/chat/completions';
+        }
       }
     } else {
       // 纯文本生成图片模式
@@ -585,8 +593,13 @@ app.post('/api/openai/generate', upload.array('images', 10), async (req, res) =>
           max_tokens: 4096
         };
 
-        if (!endpoint.includes('/v1/')) {
-          endpoint = endpoint.replace(/\/$/, '') + '/v1/chat/completions';
+        if (!endpoint.includes('chat/completions')) {
+          endpoint = endpoint.replace(/\/$/, '');
+          if (endpoint.endsWith('/v1')) {
+            endpoint += '/chat/completions';
+          } else {
+            endpoint += '/v1/chat/completions';
+          }
         }
       }
     }
