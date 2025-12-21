@@ -1440,7 +1440,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // 简单 Markdown 渲染
   function renderMarkdown(text) {
     if (!text) return '';
+
+    // 获取 API 域名用于替换
+    let apiHost = '';
+    if (currentSettings.provider === 'custom' && currentSettings.customUrl) {
+      try {
+        const urlObj = new URL(currentSettings.customUrl);
+        apiHost = urlObj.hostname; // api.yanny123.top
+      } catch (e) { }
+    }
+
     return text
+      // 图片: ![alt](url)
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+        // 替换 127.0.0.1 为公网域名 (保留端口)
+        if (apiHost && url.includes('127.0.0.1')) {
+          url = url.replace('127.0.0.1', apiHost);
+        }
+        return `<img src="${url}" alt="${alt}" style="max-width: 100%; border-radius: 8px; margin: 10px 0;">`;
+      })
+      // 链接: [text](url)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')  // **粗体**
       .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>') // *斜体* (排除**)
       .replace(/`([^`]+)`/g, '<code>$1</code>')            // `代码`
