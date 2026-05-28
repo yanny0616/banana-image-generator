@@ -23,57 +23,6 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-function isOpenAIImageModel(model = '') {
-  return /(?:dall-?e|gpt-image|image-generation|image generation)/i.test(model);
-}
-
-function resolveOpenAIEndpoint(apiUrl, model, forceChatCompletions = false) {
-  let endpoint = apiUrl.trim().replace(/\/$/, '');
-
-  if (endpoint.includes('/images/generations') || endpoint.includes('dall-e')) {
-    return endpoint;
-  }
-
-  if (endpoint.includes('/chat/completions')) {
-    return endpoint;
-  }
-
-  if (forceChatCompletions) {
-    return endpoint.endsWith('/v1')
-      ? `${endpoint}/chat/completions`
-      : `${endpoint}/v1/chat/completions`;
-  }
-
-  if (isOpenAIImageModel(model)) {
-    return endpoint.endsWith('/v1')
-      ? `${endpoint}/images/generations`
-      : `${endpoint}/v1/images/generations`;
-  }
-
-  return endpoint.endsWith('/v1')
-    ? `${endpoint}/chat/completions`
-    : `${endpoint}/v1/chat/completions`;
-}
-
-async function parseApiResponse(response) {
-  const text = await response.text();
-  if (!text) return {};
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    return { raw: text };
-  }
-}
-
-function getApiErrorMessage(data, fallback) {
-  if (data?.error?.message) return data.error.message;
-  if (typeof data?.error === 'string') return data.error;
-  if (data?.message) return data.message;
-  if (data?.raw) return data.raw;
-  return fallback;
-}
-
 // 存储会话历史（用于多轮对话）
 const chatSessions = new Map();
 
@@ -188,12 +137,12 @@ app.post('/api/gemini/generate', upload.array('images', 14), async (req, res) =>
       body: JSON.stringify(requestBody)
     });
 
-    const data = await parseApiResponse(response);
+    const data = await response.json();
 
     if (!response.ok) {
       console.error('[Gemini Error]', data);
       return res.status(response.status).json({
-        error: getApiErrorMessage(data, '生成失败'),
+        error: data.error?.message || '生成失败',
         details: data
       });
     }
@@ -433,8 +382,15 @@ app.post('/api/gemini/stream', upload.array('images', 14), async (req, res) => {
         stream: true
       };
 
-      // AI 对话固定使用 chat/completions，避免图片模型名误判到 images/generations
-      const endpoint = resolveOpenAIEndpoint(customUrl, model, true);
+      // 确定 API 端点
+      let endpoint = customUrl.replace(/\/$/, '');
+      if (endpoint.endsWith('/chat/completions')) {
+        // 用户提供了完整路径，不做修改
+      } else if (endpoint.endsWith('/v1')) {
+        endpoint += '/chat/completions';
+      } else {
+        endpoint += '/v1/chat/completions';
+      }
 
       response = await fetch(endpoint, {
         method: 'POST',
@@ -621,11 +577,20 @@ app.post('/api/openai/generate', upload.array('images', 10), async (req, res) =>
         max_tokens: 4096
       };
 
-      endpoint = resolveOpenAIEndpoint(endpoint, model, true);
+      // 如果URL不包含路径，添加默认路径
+      // 如果URL不包含路径，添加默认路径
+      if (!endpoint.includes('chat/completions')) {
+        endpoint = endpoint.replace(/\/$/, '');
+        if (endpoint.endsWith('/v1')) {
+          endpoint += '/chat/completions';
+        } else {
+          endpoint += '/v1/chat/completions';
+        }
+      }
     } else {
       // 纯文本生成图片模式
-      // 检测API类型 - 图片模型默认走 images/generations，聊天/文本模型走 chat/completions
-      if (endpoint.includes('images/generations') || endpoint.includes('dall-e') || isOpenAIImageModel(model)) {
+      // 检测API类型 - 如果URL包含images/generations则使用DALL-E格式
+      if (endpoint.includes('images/generations') || endpoint.includes('dall-e')) {
         requestBody = {
           model,
           prompt,
@@ -635,7 +600,6 @@ app.post('/api/openai/generate', upload.array('images', 10), async (req, res) =>
           style,
           response_format: responseFormat
         };
-        endpoint = resolveOpenAIEndpoint(endpoint, model);
       } else {
         // 通用 chat/completions 格式
         requestBody = {
@@ -647,7 +611,14 @@ app.post('/api/openai/generate', upload.array('images', 10), async (req, res) =>
           max_tokens: 4096
         };
 
-        endpoint = resolveOpenAIEndpoint(endpoint, model);
+        if (!endpoint.includes('chat/completions')) {
+          endpoint = endpoint.replace(/\/$/, '');
+          if (endpoint.endsWith('/v1')) {
+            endpoint += '/chat/completions';
+          } else {
+            endpoint += '/v1/chat/completions';
+          }
+        }
       }
     }
 
@@ -662,12 +633,12 @@ app.post('/api/openai/generate', upload.array('images', 10), async (req, res) =>
       body: JSON.stringify(requestBody)
     });
 
-    const data = await parseApiResponse(response);
+    const data = await response.json();
 
     if (!response.ok) {
       console.error('[OpenAI Error]', data);
       return res.status(response.status).json({
-        error: getApiErrorMessage(data, '生成失败'),
+        error: data.error?.message || '生成失败',
         details: data
       });
     }
